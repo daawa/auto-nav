@@ -106,7 +106,7 @@ public class NewIntentProcessor extends AbstractProcessor {
                         .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
                         .returns(classIntent)
                         .addParameter(classContext, "context")
-                        .addStatement("$T comp = new $T($L, $L)", classComponentName, classComponentName, "context", "\"" + activityClass + "\"")
+                        .addStatement("$T comp = new $T($L, $S)", classComponentName, classComponentName, "context", activityClass.toString())
                         .addStatement("$T intent = new $T()", classIntent, classIntent)
                         .addStatement("intent.setComponent(comp)")
                         .addStatement("return intent")
@@ -118,7 +118,7 @@ public class NewIntentProcessor extends AbstractProcessor {
             /**
              * 3. write generated class to file
              */
-            JavaFile.builder("com.navi.one", navigatorBuilder.build()).build().writeTo(filer);
+            JavaFile.builder("com.nav.one", navigatorBuilder.build()).build().writeTo(filer);
 
 
         } catch (IOException e) {
