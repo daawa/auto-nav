@@ -2,12 +2,21 @@ package test.test.navprocessor;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.TextView;
 
-import com.example.NewIntent;
+import com.example.annotation.IntentParam;
+import com.example.annotation.NewIntent;
+
+import nav.base.one.Navigator;
 
 @NewIntent
 public class MainActivity extends AppCompatActivity {
+
+    @IntentParam
+    private static final String mainkey1 = "mainkey1";
+    @IntentParam
+    private static final String mainkey2 = "mainkey2";
 
     // Used to load the 'native-lib' library on application startup.
     static {
@@ -22,6 +31,16 @@ public class MainActivity extends AppCompatActivity {
         // Example of a call to a native method
         TextView tv = (TextView) findViewById(R.id.sample_text);
         tv.setText(stringFromJNI());
+
+        tv.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Navigator.toSecondActivityIntent(MainActivity.this)
+                        .test_("test")
+                        .ttt_("ttt")
+                        .go();
+            }
+        });
     }
 
     /**

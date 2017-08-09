@@ -1,4 +1,24 @@
 apply plugin: 'java'
+//apply plugin: 'com.android.library'
+
+//
+//android {
+//    compileSdkVersion 25
+//    buildToolsVersion "26.0.0"
+//    defaultConfig {
+//        minSdkVersion 19
+//        targetSdkVersion 25
+//        versionCode 1
+//        versionName "1.0"
+//    }
+//    buildTypes {
+//        release {
+//            minifyEnabled false
+//            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+//        }
+//    }
+//
+//}
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
@@ -6,6 +26,7 @@ dependencies {
     compile 'com.google.guava:guava:23.0'
     // https://mvnrepository.com/artifact/com.google.auto.service/auto-service
     compile group: 'com.google.auto.service', name: 'auto-service', version: '1.0-rc3'
+    //provided 'org.glassfish:javax.annotation:10.0-b28'
 
 
     compile project(':nav-annotation')
