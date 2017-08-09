@@ -1,1 +1,1 @@
-include ':app', ':nav-annotation', ':nav-processor'
+include ':app', ':nav-annotation', ':nav-processor', ':nav-baseintent'
