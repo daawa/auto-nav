@@ -27,7 +27,7 @@ public class SecondActivity extends AppCompatActivity {
         findViewById(R.id.text).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Navigator.toMainActivityIntent(SecondActivity.this)
+                Navigator.toMainActivity(SecondActivity.this)
                         .mainkey1_("djfkds")
                         .mainkey2_("skfjdklfs")
                         .go();

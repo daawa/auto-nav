@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -37,15 +36,14 @@ import javax.tools.Diagnostic;
 
 @AutoService(Processor.class)
 public class NavProcessor extends AbstractProcessor {
-    private static final String METHOD_PREFIX = "start";
+    private static final String METHOD_PREFIX = "to";
     private static final ClassName classIntent = ClassName.get("android.content", "Intent");
     private static final ClassName classContext = ClassName.get("android.content", "Context");
     private static final ClassName classComponentName = ClassName.get("android.content", "ComponentName");
 
     private Filer filer;
     private Messager messager;
-    private Elements elements;
-    private Map<String, String> activityesWithPackage;
+    private Elements elementsUtil;
 
     private Set<ActivityIntentModel> activityModels;
 
@@ -56,8 +54,7 @@ public class NavProcessor extends AbstractProcessor {
 
         filer = processingEnvironment.getFiler();
         messager = processingEnvironment.getMessager();
-        elements = processingEnvironment.getElementUtils();
-        activityesWithPackage = new HashMap<>();
+        elementsUtil = processingEnvironment.getElementUtils();
         activityModels = new HashSet<>();
     }
 
@@ -82,10 +79,6 @@ public class NavProcessor extends AbstractProcessor {
 
         new BaseIntentGenerator().generateBaseIntent(filer);
 
-//        try {
-        /**
-         * 1. find all annotated classes
-         */
         for (Element element : roundEnvironment.getElementsAnnotatedWith(NewIntent.class)) {
             if (element.getKind() != ElementKind.CLASS) {
                 messager.printMessage(Diagnostic.Kind.ERROR, "NewIntent can only be applied to class");
@@ -93,51 +86,11 @@ public class NavProcessor extends AbstractProcessor {
             }
 
             TypeElement typeElement = (TypeElement) element;
-//                activityesWithPackage.put(
-//                        typeElement.getSimpleName().toString(),
-//                        elements.getPackageOf(typeElement).getQualifiedName().toString());
             ActivityIntentModel activityModel = getActivityModel(typeElement);
             activityModels.add(activityModel);
         }
 
-        /**
-         * 2. generate a class
-         */
-
         createNavigator(activityModels);
-            /*
-            TypeSpec.Builder navigatorBuilder = TypeSpec.classBuilder("Navigator").addModifiers(Modifier.PUBLIC, Modifier.FINAL);
-            for (Map.Entry<String, String> entry : activityesWithPackage.entrySet()) {
-                String activityName = entry.getKey();
-                String packageName = entry.getValue();
-                ClassName activityClass = ClassName.get(packageName, activityName);
-
-                MethodSpec.Builder methodSpecBuilder = MethodSpec
-                        .methodBuilder(METHOD_PREFIX + activityName);
-
-                MethodSpec methodSpec = methodSpecBuilder
-                        .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-                        .returns(classIntent)
-                        .addParameter(classContext, "context")
-                        .addStatement("$T comp = new $T($L, $S)", classComponentName, classComponentName, "context", activityClass.toString())
-                        .addStatement("$T intent = new $T()", classIntent, classIntent)
-                        .addStatement("intent.setComponent(comp)")
-                        .addStatement("return intent")
-                        .build();
-                messager.printMessage(Diagnostic.Kind.NOTE, methodSpec.toString());
-                navigatorBuilder.addMethod(methodSpec);
-            }
-            */
-
-        /**
-         * 3. write generated class to file
-         */
-        //JavaFile.builder("com.nav.one", navigatorBuilder.build()).build().writeTo(filer);
-
-
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
         return true;
     }
 
@@ -150,15 +103,12 @@ public class NavProcessor extends AbstractProcessor {
     @Override
     public Set<String> getSupportedAnnotationTypes() {
         return ImmutableSet.of(NewIntent.class.getCanonicalName()
-                //,IntentParam.class.getCanonicalName()
-                //,IntentParam2.class.getCanonicalName()
         );
     }
 
     @Override
     public SourceVersion getSupportedSourceVersion() {
         return SourceVersion.latestSupported();
-        //return super.getSupportedSourceVersion();
     }
 
     @Override
@@ -168,17 +118,10 @@ public class NavProcessor extends AbstractProcessor {
 
     private ActivityIntentModel getActivityModel(TypeElement typeElement) {
         ActivityIntentModel activityModel = new ActivityIntentModel(
-                elements.getPackageOf(typeElement).getQualifiedName().toString()
-                , typeElement.getSimpleName().toString());
-
-        //activityModel.qualifiedName = typeElement.getQualifiedName().toString();
-//        activityModel.clzName = typeElement.getSimpleName().toString();
-//        activityModel.packageName = elements.getPackageOf(typeElement).getQualifiedName().toString();
+                elementsUtil.getPackageOf(typeElement).getQualifiedName().toString(),
+                typeElement.getSimpleName().toString());
 
         List<? extends Element> list = typeElement.getEnclosedElements();
-//        Set<Element> set = Collections.<Element>emptySet();
-//        set.add(typeElement);
-//        Set<VariableElement> fields = ElementFilter.fieldsIn(set);
         if (list != null) {
             for (Element e : list) {
                 if (e.getAnnotation(IntentParam.class) != null) {
@@ -191,16 +134,10 @@ public class NavProcessor extends AbstractProcessor {
                     ActivityIntentModel.ParamModel paramModel = new ActivityIntentModel.ParamModel();
                     paramModel.fieldName = e.getSimpleName().toString();
                     TypeMirror fieldType = e.asType();
-                    //String fullTypeClassName = fieldType.toString();
-                    //paramModel.type = fullTypeClassName;
                     paramModel.type = fieldType;
                     activityModel.addParamModel(paramModel);
 
                 }
-//                        if (e.getAnnotation(IntentParam2.class) != null) {
-//                            messager.printMessage(Diagnostic.Kind.NOTE, "IntentParam2 annotated element:" + e.getSimpleName());
-//                        }
-
             }
         }
 
@@ -222,7 +159,7 @@ public class NavProcessor extends AbstractProcessor {
 
             ClassName returnType = ClassName.get(model.getPackageName(), model.getIntentClzName());
             MethodSpec.Builder methodSpecBuilder = MethodSpec
-                    .methodBuilder("to" + model.getIntentClzName());
+                    .methodBuilder(METHOD_PREFIX + model.getClzName());
             methodSpecBuilder.addModifiers(Modifier.PUBLIC, Modifier.STATIC)
                     .addParameter(classContext, "context")
                     .returns(ClassName.get(model.getPackageName(), model.getIntentClzName()))
@@ -231,11 +168,6 @@ public class NavProcessor extends AbstractProcessor {
 
             navigatorBuilder.addMethod(methodSpecBuilder.build());
         }
-
-
-        /**
-         * 3. write generated class to file
-         */
 
         try {
             JavaFile.builder("nav.base.one", navigatorBuilder.build()).build().writeTo(filer);

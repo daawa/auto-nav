@@ -35,7 +35,7 @@ public class MainActivity extends AppCompatActivity {
         tv.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Navigator.toSecondActivityIntent(MainActivity.this)
+                Navigator.toSecondActivity(MainActivity.this)
                         .test_("test")
                         .ttt_("ttt")
                         .go();
