@@ -21,6 +21,8 @@ public class BaseIntent {
     protected Bundle params;
     private int flags = 0;
 
+    private static PackageManager packageManager;
+
     public BaseIntent(Context context, String component){
         this.fromContext = context;
         this.component = component;
@@ -72,7 +74,7 @@ public class BaseIntent {
         return true;
     }
 
-    private static PackageManager packageManager;
+
     private  PackageManager getPackageManager(){
         if(packageManager == null){
             synchronized (BaseIntent.class){

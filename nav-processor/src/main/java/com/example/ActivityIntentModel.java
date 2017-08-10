@@ -14,15 +14,20 @@ public class ActivityIntentModel {
     private String clzName;
     private String classIntentName;
 
-    String qualifiedName;
+    private String qualifiedName;
 
-    List<ParamModel> paramModelList;
+    private List<ParamModel> paramModelList;
 
     public ActivityIntentModel(String packageName, String clzName) {
         this.packageName = packageName;
         this.clzName = clzName ;
+        this.qualifiedName = packageName + "." + clzName;
         this.classIntentName = clzName + "Intent";
         paramModelList = new ArrayList<>();
+    }
+
+    public void addParamModel(ParamModel model){
+        paramModelList.add(model);
     }
 
     @Override
@@ -39,6 +44,10 @@ public class ActivityIntentModel {
         return super.equals(o);
     }
 
+    public List<ParamModel> getParamModelList(){
+        return paramModelList;
+    }
+
     public String getPackageName(){
         return packageName;
     }
@@ -51,9 +60,13 @@ public class ActivityIntentModel {
         return clzName;
     }
 
+    public String getQualifiedName(){
+        return qualifiedName;
+    }
+
     public static class ParamModel {
-        String fieldName;
-        TypeMirror type;
+        public String fieldName;
+        public TypeMirror type;
     }
 
 

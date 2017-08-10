@@ -1,5 +1,6 @@
-package com.example;
+package com.example.nav.processor;
 
+import com.example.ActivityIntentModel;
 import com.example.annotation.IntentParam;
 import com.example.annotation.NewIntent;
 import com.google.auto.service.AutoService;
@@ -35,7 +36,7 @@ import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic;
 
 @AutoService(Processor.class)
-public class NewIntentProcessor extends AbstractProcessor {
+public class NavProcessor extends AbstractProcessor {
     private static final String METHOD_PREFIX = "start";
     private static final ClassName classIntent = ClassName.get("android.content", "Intent");
     private static final ClassName classContext = ClassName.get("android.content", "Context");
@@ -78,6 +79,8 @@ public class NewIntentProcessor extends AbstractProcessor {
             // when set is null or empty, it is a round having nothing to do with this processor.
             return false;
         }
+
+        new BaseIntentGenerator().generateBaseIntent(filer);
 
 //        try {
         /**
@@ -168,7 +171,7 @@ public class NewIntentProcessor extends AbstractProcessor {
                 elements.getPackageOf(typeElement).getQualifiedName().toString()
                 , typeElement.getSimpleName().toString());
 
-        activityModel.qualifiedName = typeElement.getQualifiedName().toString();
+        //activityModel.qualifiedName = typeElement.getQualifiedName().toString();
 //        activityModel.clzName = typeElement.getSimpleName().toString();
 //        activityModel.packageName = elements.getPackageOf(typeElement).getQualifiedName().toString();
 
@@ -191,7 +194,7 @@ public class NewIntentProcessor extends AbstractProcessor {
                     //String fullTypeClassName = fieldType.toString();
                     //paramModel.type = fullTypeClassName;
                     paramModel.type = fieldType;
-                    activityModel.paramModelList.add(paramModel);
+                    activityModel.addParamModel(paramModel);
 
                 }
 //                        if (e.getAnnotation(IntentParam2.class) != null) {
@@ -223,7 +226,7 @@ public class NewIntentProcessor extends AbstractProcessor {
             methodSpecBuilder.addModifiers(Modifier.PUBLIC, Modifier.STATIC)
                     .addParameter(classContext, "context")
                     .returns(ClassName.get(model.getPackageName(), model.getIntentClzName()))
-                    .addStatement("$T intent = new $T($L,$S)", returnType, returnType, "context", model.qualifiedName)
+                    .addStatement("$T intent = new $T($L,$S)", returnType, returnType, "context", model.getQualifiedName())
                     .addStatement("return intent");
 
             navigatorBuilder.addMethod(methodSpecBuilder.build());
@@ -258,7 +261,7 @@ public class NewIntentProcessor extends AbstractProcessor {
         activityIntentBuilder.addMethod(constructor.build());
 
 
-        for (ActivityIntentModel.ParamModel paramModel : model.paramModelList) {
+        for (ActivityIntentModel.ParamModel paramModel : model.getParamModelList()) {
 
             /**
              *     public final MainActivityIntent param1_(String arg){
