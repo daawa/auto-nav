@@ -1,5 +1,7 @@
 package test.test.navprocessor;
 
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -13,10 +15,10 @@ import nav.base.one.Navigator;
 @NewIntent
 public class MainActivity extends AppCompatActivity {
 
-    @IntentParam
-    private static final String mainkey1 = "mainkey1";
-    @IntentParam
-    private static final String mainkey2 = "mainkey2";
+    @IntentParam(name = "mainKey1", type = "string")
+    private static final String main_key_1 = "mainkey1";
+    @IntentParam(type="float")
+    private static final String main_key2 = "mainkey2";
 
     // Used to load the 'native-lib' library on application startup.
     static {
@@ -29,18 +31,23 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         // Example of a call to a native method
-        TextView tv = (TextView) findViewById(R.id.sample_text);
+        TextView tv = (TextView) findViewById(R.id.text);
         tv.setText(stringFromJNI());
 
         tv.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Navigator.toSecondActivity(MainActivity.this)
-                        .test_("test")
-                        .ttt_("ttt")
+                        .param_(new TestParcel())
+                        .param2_("ttt")
                         .go();
             }
         });
+
+        if (getIntent().getExtras() != null) {
+            ((TextView) findViewById(R.id.param1)).setText(main_key_1 + ":" + getIntent().getExtras().getString(main_key_1));
+            ((TextView) findViewById(R.id.param2)).setText(main_key2 + ":" + getIntent().getExtras().getString(main_key2));
+        }
     }
 
     /**
@@ -48,4 +55,37 @@ public class MainActivity extends AppCompatActivity {
      * which is packaged with this application.
      */
     public native String stringFromJNI();
+
+    public static class TestParcel implements Parcelable{
+        int a = 3;
+        String b = "value in a  parcelable";
+
+        @Override
+        public int describeContents() {
+            return 0;
+        }
+
+        @Override
+        public void writeToParcel(Parcel dest, int flags) {
+            dest.writeInt(a);
+            dest.writeString(b);
+        }
+
+        public static final Creator<TestParcel> CREATOR = new Creator<TestParcel>() {
+            @Override
+            public TestParcel createFromParcel(Parcel source) {
+                TestParcel parcel = new TestParcel();
+                parcel.a = source.readInt();
+                parcel.b = source.readString();
+                return parcel;
+            }
+
+            @Override
+            public TestParcel[] newArray(int size) {
+                return new TestParcel[size];
+            }
+        };
+
+
+    }
 }

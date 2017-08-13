@@ -1,5 +1,6 @@
 package com.example;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -66,7 +67,8 @@ public class ActivityIntentModel {
 
     public static class ParamModel {
         public String fieldName;
-        public TypeMirror type;
+        public String type;
+        public String generatedPropName;
     }
 
 

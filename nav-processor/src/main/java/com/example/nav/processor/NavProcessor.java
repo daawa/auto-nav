@@ -4,14 +4,16 @@ import com.example.ActivityIntentModel;
 import com.example.annotation.IntentParam;
 import com.example.annotation.NewIntent;
 import com.google.auto.service.AutoService;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -30,7 +32,6 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic;
 
@@ -124,7 +125,8 @@ public class NavProcessor extends AbstractProcessor {
         List<? extends Element> list = typeElement.getEnclosedElements();
         if (list != null) {
             for (Element e : list) {
-                if (e.getAnnotation(IntentParam.class) != null) {
+                IntentParam intentParam = e.getAnnotation(IntentParam.class); //AnnotationMirror mirror = e.getAnnotationMirrors().get(0);
+                if (intentParam != null) {
                     if (e.getKind() != ElementKind.FIELD || e.getModifiers() == null || !e.getModifiers().contains(Modifier.STATIC)) {
                         messager.printMessage(Diagnostic.Kind.ERROR, "IntentParam can only be applied to STATIC FIELD");
                         continue;
@@ -133,8 +135,10 @@ public class NavProcessor extends AbstractProcessor {
 
                     ActivityIntentModel.ParamModel paramModel = new ActivityIntentModel.ParamModel();
                     paramModel.fieldName = e.getSimpleName().toString();
-                    TypeMirror fieldType = e.asType();
-                    paramModel.type = fieldType;
+                    //TypeMirror fieldType = e.asType();
+                    //paramModel.type = fieldType;
+                    paramModel.type = intentParam.type();
+                    paramModel.generatedPropName = intentParam.name();
                     activityModel.addParamModel(paramModel);
 
                 }
@@ -204,12 +208,13 @@ public class NavProcessor extends AbstractProcessor {
              *
              */
 
+            String methodName = Strings.isNullOrEmpty(paramModel.generatedPropName)? paramModel.fieldName : paramModel.generatedPropName;
             MethodSpec.Builder methodSpecBuilder = MethodSpec
-                    .methodBuilder(paramModel.fieldName + "_");
+                    .methodBuilder(methodName + "_");
 
             MethodSpec methodSpec = methodSpecBuilder
                     .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-                    .addParameter(ClassName.get(paramModel.type), "arg")
+                    .addParameter(getTypeNameFor(paramModel.type), "arg")
                     .addStatement("$T key = getStaticFieldValue($S, $S, $S)", ClassName.get(String.class), model.getPackageName(), model.getClzName(), paramModel.fieldName)
                     .addStatement("params.put" + getSimpleTypeName(paramModel.type) + "($L,$L)", "key", "arg")
                     .addStatement("return this")
@@ -228,23 +233,59 @@ public class NavProcessor extends AbstractProcessor {
 
     }
 
-    private String getSimpleTypeName(TypeMirror typeMirror) {
-        String qualifiedName = typeMirror.toString();
-        if (typeEqual(String.class, qualifiedName)) {
-            return "String";
-        } else if (typeEqual(byte.class, qualifiedName)) {
-            return "Byte";
-        } else if (typeEqual(int.class, qualifiedName)) {
-            return "Int";
-        } else if (typeEqual(long.class, qualifiedName)) {
-            return "Long";
-        } else if (typeEqual(String.class, qualifiedName)) {
-            return "Float";
-        } else if (typeEqual(String.class, qualifiedName)) {
-            return "Double";
-        }
+    private TypeName getTypeNameFor(String arg){
+        switch (arg){
+            case "string":
+                return TypeName.get(String.class);
+            case "int":
+                return TypeName.get(int.class);
+            case "byte":
+                return TypeName.get(byte.class);
+            case "long":
+                return TypeName.get(long.class);
+            case "float":
+                return TypeName.get(float.class);
+            case "double":
+                return TypeName.get(float.class);
+            case "parcelable":
+                return ClassName.get("android.os","Parcelable");
 
-        return "Serializable";
+            default:{
+                messager.printMessage(Diagnostic.Kind.NOTE," return default 'Serializable' for" + arg);
+                return TypeName.get(Serializable.class);
+            }
+
+        }
+    }
+
+//    private String getSimpleTypeName(Type typeMirror) {
+//        String qualifiedName = typeMirror.toString();
+//        if (typeEqual(String.class, qualifiedName)) {
+//            return "String";
+//        } else if (typeEqual(byte.class, qualifiedName)) {
+//            return "Byte";
+//        } else if (typeEqual(int.class, qualifiedName)) {
+//            return "Int";
+//        } else if (typeEqual(long.class, qualifiedName)) {
+//            return "Long";
+//        } else if (typeEqual(String.class, qualifiedName)) {
+//            return "Float";
+//        } else if (typeEqual(String.class, qualifiedName)) {
+//            return "Double";
+//        }
+//
+//        return "Serializable";
+//    }
+
+    public String getSimpleTypeName(String original) {
+        if (Strings.isNullOrEmpty(original)) {
+            return original;
+        }
+        int dot = original.lastIndexOf(".");
+        if(dot > 0 && dot < original.length() -1){
+            original = original.substring(dot + 1);
+        }
+        return original.substring(0, 1).toUpperCase() + original.substring(1);
     }
 
     private boolean typeEqual(Class clz, String qualifiedName) {
