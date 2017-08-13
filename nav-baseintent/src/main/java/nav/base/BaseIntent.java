@@ -87,10 +87,10 @@ public class BaseIntent {
         return packageManager;
     }
 
-    protected String getStaticFieldValue(String pck, String clz, String f){
+    protected String getStaticFieldValue(String qualifiedClassName,  String f){
         String key = null;
         try {
-            Class klz = Class.forName(pck+"."+ clz);
+            Class klz = Class.forName( qualifiedClassName );
             Field field = klz.getDeclaredField(f);
             field.setAccessible(true);
             key = field.get(null).toString();

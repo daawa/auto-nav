@@ -5,14 +5,14 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.TextView;
 
+import com.example.annotation.AutoWireNav;
 import com.example.annotation.IntentParam;
-import com.example.annotation.NewIntent;
 
 import nav.base.one.Navigator;
 
 
-@NewIntent
-public class SecondActivity extends AppCompatActivity {
+@AutoWireNav
+public class SecondActivity extends BaseActivity {
 
 
     @IntentParam(name="param",type = "parcelable")

@@ -31,6 +31,12 @@ public class ActivityIntentModel {
         paramModelList.add(model);
     }
 
+    public void addParamModels(List<ParamModel> models){
+        if(models != null){
+            paramModelList.addAll(models);
+        }
+    }
+
     @Override
     public boolean equals(Object o) {
 
@@ -69,6 +75,8 @@ public class ActivityIntentModel {
         public String fieldName;
         public String type;
         public String generatedPropName;
+
+        public String qualifiedClassName;
     }
 
 

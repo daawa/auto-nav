@@ -1,19 +1,19 @@
 package test.test.navprocessor;
 
+import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
 
+import com.example.annotation.AutoWireNav;
 import com.example.annotation.IntentParam;
-import com.example.annotation.NewIntent;
 
 import nav.base.one.Navigator;
 
-@NewIntent
-public class MainActivity extends AppCompatActivity {
+@AutoWireNav
+public class MainActivity extends BaseActivity {
 
     @IntentParam(name = "mainKey1", type = "string")
     private static final String main_key_1 = "mainkey1";
@@ -40,6 +40,8 @@ public class MainActivity extends AppCompatActivity {
                 Navigator.toSecondActivity(MainActivity.this)
                         .param_(new TestParcel())
                         .param2_("ttt")
+                        .baseParamA_("basea")
+                        .baseParamBilli_(11.f)
                         .go();
             }
         });

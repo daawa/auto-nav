@@ -39,12 +39,15 @@ dependencies {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
 
-    //compile project(':nav-annotation')
-    compile 'com.github.daawa.auto-nav:nav-annotation:1.0.1'
-    //annotationProcessor project(':nav-processor')
-    annotationProcessor 'com.github.daawa.auto-nav:nav-processor:1.0.0'
+    compile project(':nav-annotation')
+    annotationProcessor project(':nav-processor')
+
+
+    //compile 'com.github.daawa.auto-nav:nav-annotation:1.0.1'
+    //annotationProcessor 'com.github.daawa.auto-nav:nav-processor:1.0.0'
 
     compile 'com.android.support:appcompat-v7:25.3.1'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     testCompile 'junit:junit:4.12'
+
 }

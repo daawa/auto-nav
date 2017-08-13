@@ -130,12 +130,11 @@ public class BaseIntentGenerator {
         MethodSpec getStaticFieldValue = MethodSpec.methodBuilder("getStaticFieldValue")
                 .addModifiers(Modifier.PROTECTED)
                 .returns(String.class)
-                .addParameter(String.class, "pck")
-                .addParameter(String.class, "clz")
+                .addParameter(String.class, "qualifiedClassName")
                 .addParameter(String.class, "f")
                 .addCode("$T key = null;\n" +
                                 " try {\n" +
-                                "     $T klz = $T.forName(pck+\".\"+ clz);\n" +
+                                "     $T klz = $T.forName(qualifiedClassName);\n" +
                                 "     $T field = klz.getDeclaredField(f);\n" +
                                 "     field.setAccessible(true);\n" +
                                 "     key = field.get(null).toString();\n" +

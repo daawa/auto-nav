@@ -1,8 +1,8 @@
 package com.example.nav.processor;
 
 import com.example.ActivityIntentModel;
+import com.example.annotation.AutoWireNav;
 import com.example.annotation.IntentParam;
-import com.example.annotation.NewIntent;
 import com.google.auto.service.AutoService;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
@@ -14,6 +14,7 @@ import com.squareup.javapoet.TypeSpec;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -32,7 +33,9 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 
 @AutoService(Processor.class)
@@ -45,6 +48,7 @@ public class NavProcessor extends AbstractProcessor {
     private Filer filer;
     private Messager messager;
     private Elements elementsUtil;
+    private Types typesUtil;
 
     private Set<ActivityIntentModel> activityModels;
 
@@ -56,6 +60,7 @@ public class NavProcessor extends AbstractProcessor {
         filer = processingEnvironment.getFiler();
         messager = processingEnvironment.getMessager();
         elementsUtil = processingEnvironment.getElementUtils();
+        typesUtil = processingEnvironment.getTypeUtils();
         activityModels = new HashSet<>();
     }
 
@@ -68,10 +73,10 @@ public class NavProcessor extends AbstractProcessor {
      */
     @Override
     public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment) {
-        messager.printMessage(Diagnostic.Kind.NOTE, "begin process annotation");
+        messager.printMessage(Diagnostic.Kind.NOTE, "\nbegin process annotation");
         if (set != null && !set.isEmpty()) {
             for (TypeElement e : set) {
-                messager.printMessage(Diagnostic.Kind.NOTE, "Accepted annotation set:" + e.getSimpleName());
+                messager.printMessage(Diagnostic.Kind.NOTE, "\nAccepted annotation set:" + e.getSimpleName());
             }
         } else {
             // when set is null or empty, it is a round having nothing to do with this processor.
@@ -80,9 +85,9 @@ public class NavProcessor extends AbstractProcessor {
 
         new BaseIntentGenerator().generateBaseIntent(filer);
 
-        for (Element element : roundEnvironment.getElementsAnnotatedWith(NewIntent.class)) {
+        for (Element element : roundEnvironment.getElementsAnnotatedWith(AutoWireNav.class)) {
             if (element.getKind() != ElementKind.CLASS) {
-                messager.printMessage(Diagnostic.Kind.ERROR, "NewIntent can only be applied to class");
+                messager.printMessage(Diagnostic.Kind.ERROR, "\nAutoWireNav can only be applied to class");
                 return true;
             }
 
@@ -103,7 +108,7 @@ public class NavProcessor extends AbstractProcessor {
 
     @Override
     public Set<String> getSupportedAnnotationTypes() {
-        return ImmutableSet.of(NewIntent.class.getCanonicalName()
+        return ImmutableSet.of(AutoWireNav.class.getCanonicalName()
         );
     }
 
@@ -122,30 +127,58 @@ public class NavProcessor extends AbstractProcessor {
                 elementsUtil.getPackageOf(typeElement).getQualifiedName().toString(),
                 typeElement.getSimpleName().toString());
 
-        List<? extends Element> list = typeElement.getEnclosedElements();
-        if (list != null) {
-            for (Element e : list) {
-                IntentParam intentParam = e.getAnnotation(IntentParam.class); //AnnotationMirror mirror = e.getAnnotationMirrors().get(0);
-                if (intentParam != null) {
-                    if (e.getKind() != ElementKind.FIELD || e.getModifiers() == null || !e.getModifiers().contains(Modifier.STATIC)) {
-                        messager.printMessage(Diagnostic.Kind.ERROR, "IntentParam can only be applied to STATIC FIELD");
-                        continue;
-                    }
-                    messager.printMessage(Diagnostic.Kind.NOTE, "IntentParam annotated element:" + e.getSimpleName());
+        messager.printMessage(Diagnostic.Kind.NOTE, "\ntype:" + typeElement.getQualifiedName());
 
-                    ActivityIntentModel.ParamModel paramModel = new ActivityIntentModel.ParamModel();
-                    paramModel.fieldName = e.getSimpleName().toString();
-                    //TypeMirror fieldType = e.asType();
-                    //paramModel.type = fieldType;
-                    paramModel.type = intentParam.type();
-                    paramModel.generatedPropName = intentParam.name();
-                    activityModel.addParamModel(paramModel);
+        activityModel.addParamModels(getParamModels(typeElement));
 
-                }
+        TypeMirror superType = typeElement.getSuperclass();
+
+        while (superType != null && !Object.class.getName().equals(superType.toString())) {
+            messager.printMessage(Diagnostic.Kind.NOTE, "\n   superType:" + superType.toString());
+            Element element = typesUtil.asElement(superType);
+            if (element != null && element instanceof TypeElement) {
+                TypeElement superE = (TypeElement) element;
+                activityModel.addParamModels(getParamModels(superE));
+
+                superType = superE.getSuperclass();
+            } else {
+                superType = null;
             }
         }
 
         return activityModel;
+    }
+
+    private List<ActivityIntentModel.ParamModel> getParamModels(TypeElement typeElement) {
+        List<ActivityIntentModel.ParamModel> paramModels = new ArrayList<>();
+
+        List<? extends Element> list = typeElement.getEnclosedElements();
+        if (list == null) {
+            return paramModels;
+        }
+        for (Element paramElement : list) {
+            IntentParam intentParam = paramElement.getAnnotation(IntentParam.class); //AnnotationMirror mirror = e.getAnnotationMirrors().get(0);
+            if (intentParam != null) {
+                if (paramElement.getKind() != ElementKind.FIELD || paramElement.getModifiers() == null || !paramElement.getModifiers().contains(Modifier.STATIC)) {
+                    messager.printMessage(Diagnostic.Kind.ERROR, "IntentParam can only be applied to STATIC FIELD");
+                    continue;
+                }
+                messager.printMessage(Diagnostic.Kind.NOTE, "   IntentParam annotated element:" + paramElement.getSimpleName());
+
+                ActivityIntentModel.ParamModel paramModel = new ActivityIntentModel.ParamModel();
+                paramModel.fieldName = paramElement.getSimpleName().toString();
+                //TypeMirror fieldType = e.asType();
+                //paramModel.type = fieldType;
+                paramModel.type = intentParam.type();
+                paramModel.generatedPropName = intentParam.name();
+                paramModel.qualifiedClassName = typeElement.getQualifiedName().toString();
+                paramModels.add(paramModel);
+
+            }
+        }
+
+        return paramModels;
+
     }
 
     private void createNavigator(Set<ActivityIntentModel> activityModels) {
@@ -208,14 +241,14 @@ public class NavProcessor extends AbstractProcessor {
              *
              */
 
-            String methodName = Strings.isNullOrEmpty(paramModel.generatedPropName)? paramModel.fieldName : paramModel.generatedPropName;
+            String methodName = Strings.isNullOrEmpty(paramModel.generatedPropName) ? paramModel.fieldName : paramModel.generatedPropName;
             MethodSpec.Builder methodSpecBuilder = MethodSpec
                     .methodBuilder(methodName + "_");
 
             MethodSpec methodSpec = methodSpecBuilder
                     .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                     .addParameter(getTypeNameFor(paramModel.type), "arg")
-                    .addStatement("$T key = getStaticFieldValue($S, $S, $S)", ClassName.get(String.class), model.getPackageName(), model.getClzName(), paramModel.fieldName)
+                    .addStatement("$T key = getStaticFieldValue($S, $S)", ClassName.get(String.class), paramModel.qualifiedClassName, paramModel.fieldName)
                     .addStatement("params.put" + getSimpleTypeName(paramModel.type) + "($L,$L)", "key", "arg")
                     .addStatement("return this")
                     .returns(activityIntent)
@@ -233,8 +266,8 @@ public class NavProcessor extends AbstractProcessor {
 
     }
 
-    private TypeName getTypeNameFor(String arg){
-        switch (arg){
+    private TypeName getTypeNameFor(String arg) {
+        switch (arg) {
             case "string":
                 return TypeName.get(String.class);
             case "int":
@@ -248,10 +281,10 @@ public class NavProcessor extends AbstractProcessor {
             case "double":
                 return TypeName.get(float.class);
             case "parcelable":
-                return ClassName.get("android.os","Parcelable");
+                return ClassName.get("android.os", "Parcelable");
 
-            default:{
-                messager.printMessage(Diagnostic.Kind.NOTE," return default 'Serializable' for" + arg);
+            default: {
+                messager.printMessage(Diagnostic.Kind.NOTE, " return default 'Serializable' for" + arg);
                 return TypeName.get(Serializable.class);
             }
 
@@ -282,7 +315,7 @@ public class NavProcessor extends AbstractProcessor {
             return original;
         }
         int dot = original.lastIndexOf(".");
-        if(dot > 0 && dot < original.length() -1){
+        if (dot > 0 && dot < original.length() - 1) {
             original = original.substring(dot + 1);
         }
         return original.substring(0, 1).toUpperCase() + original.substring(1);
