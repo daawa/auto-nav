@@ -3,6 +3,7 @@
 buildscript {
     repositories {
         jcenter()
+
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:2.3.3'
@@ -27,11 +28,7 @@ subprojects {
     apply plugin: 'java'
     apply plugin: 'maven'
 
-    group='com.github.daawa.nav'
-
-
-    sourceCompatibility = 1.8 // java 8
-    targetCompatibility = 1.8
+    group='com.github.daawa.auto-nav'
 
     task sourcesJar(type: Jar, dependsOn: classes) {
         classifier = 'sources'

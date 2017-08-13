@@ -1,5 +1,9 @@
 apply plugin: 'com.android.application'
 
+repositories {
+    maven { url "https://jitpack.io" }
+}
+
 android {
     compileSdkVersion 25
     buildToolsVersion "26.0.0"
@@ -35,9 +39,11 @@ dependencies {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
 
-    compile project(':nav-annotation')
-    //compile project(':nav-baseintent')
-    annotationProcessor project(':nav-processor')
+    //compile project(':nav-annotation')
+    compile 'com.github.daawa.auto-nav:nav-annotation:1.0.0'
+    //annotationProcessor project(':nav-processor')
+    annotationProcessor 'com.github.daawa.auto-nav:nav-processor:1.0.0'
+
     compile 'com.android.support:appcompat-v7:25.3.1'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     testCompile 'junit:junit:4.12'
