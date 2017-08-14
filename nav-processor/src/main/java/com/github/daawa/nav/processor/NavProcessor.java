@@ -1,6 +1,6 @@
-package com.example.nav.processor;
+package com.github.daawa.nav.processor;
 
-import com.example.ActivityIntentModel;
+import com.github.daawa.nav.ActivityIntentModel;
 import com.example.annotation.AutoWireNav;
 import com.example.annotation.IntentParam;
 import com.google.auto.service.AutoService;

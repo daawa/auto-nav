@@ -1,4 +1,4 @@
-package com.example.nav.processor;
+package com.github.daawa.nav.processor;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -15,9 +15,9 @@ import java.util.ArrayList;
 import javax.annotation.processing.Filer;
 import javax.lang.model.element.Modifier;
 
-import static com.example.nav.processor.NavProcessor.listenerName;
-import static com.example.nav.processor.NavProcessor.navigatorClassName;
-import static com.example.nav.processor.NavProcessor.navigatorPackageName;
+import static com.github.daawa.nav.processor.NavProcessor.listenerName;
+import static com.github.daawa.nav.processor.NavProcessor.navigatorClassName;
+import static com.github.daawa.nav.processor.NavProcessor.navigatorPackageName;
 
 /**
  * Created by zhangzhenwei on 2017/8/10.

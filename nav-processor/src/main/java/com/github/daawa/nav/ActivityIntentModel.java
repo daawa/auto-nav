@@ -1,10 +1,7 @@
-package com.example;
+package com.github.daawa.nav;
 
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.lang.model.type.TypeMirror;
 
 /**
  * Created by zhangzhenwei on 2017/8/9.
