@@ -1,5 +1,6 @@
 package test.test.navprocessor;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -40,7 +41,7 @@ public class MainActivity extends BaseActivity {
                 Navigator.toSecondActivity(MainActivity.this)
                         .param_(new TestParcel())
                         .param2_("ttt")
-                        .baseParamA_("basea")
+                        .baseParamA_("aaaa")
                         .baseParamBilli_(11.f)
                         .go();
             }

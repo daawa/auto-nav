@@ -7,8 +7,10 @@ import com.google.auto.service.AutoService;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
@@ -40,10 +42,14 @@ import javax.tools.Diagnostic;
 
 @AutoService(Processor.class)
 public class NavProcessor extends AbstractProcessor {
+
+    public static final String navigatorPackageName = "nav.base.one";
+    public static final String navigatorClassName = "Navigator";
+    public static final String listenerName = "PreGoListener";
+
     private static final String METHOD_PREFIX = "to";
     private static final ClassName classIntent = ClassName.get("android.content", "Intent");
     private static final ClassName classContext = ClassName.get("android.content", "Context");
-    private static final ClassName classComponentName = ClassName.get("android.content", "ComponentName");
 
     private Filer filer;
     private Messager messager;
@@ -182,7 +188,9 @@ public class NavProcessor extends AbstractProcessor {
     }
 
     private void createNavigator(Set<ActivityIntentModel> activityModels) {
-        TypeSpec.Builder navigatorBuilder = TypeSpec.classBuilder("Navigator").addModifiers(Modifier.PUBLIC, Modifier.FINAL);
+
+        TypeSpec.Builder navigatorBuilder = TypeSpec.classBuilder(navigatorClassName)
+                .addModifiers(Modifier.PUBLIC, Modifier.FINAL);
 
         for (ActivityIntentModel model : activityModels) {
             createActivityIntent(model);
@@ -206,11 +214,53 @@ public class NavProcessor extends AbstractProcessor {
             navigatorBuilder.addMethod(methodSpecBuilder.build());
         }
 
+        addPreGoListener(navigatorBuilder);
+
+
         try {
-            JavaFile.builder("nav.base.one", navigatorBuilder.build()).build().writeTo(filer);
+            JavaFile.builder(navigatorPackageName, navigatorBuilder.build()).build().writeTo(filer);
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+    }
+
+
+    private void addPreGoListener(TypeSpec.Builder navigatorBuilder){
+        MethodSpec onPreGo = MethodSpec.methodBuilder("onPreGo")
+                .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+                .returns(boolean.class)
+                .addParameter(classContext,"fromContext")
+                .addParameter(classIntent, "intent")
+                .build();
+
+        TypeSpec preListenerType = TypeSpec.interfaceBuilder(listenerName)
+                .addModifiers(Modifier.PUBLIC)
+                .addMethod(onPreGo).build();
+
+        TypeName listenerType = ClassName.get(navigatorPackageName, navigatorClassName, listenerName);
+        TypeName listenerList = ParameterizedTypeName.get(ClassName.get(ArrayList.class), listenerType);
+        navigatorBuilder.addType(preListenerType);
+        navigatorBuilder.addField(
+                listenerList,
+                "preGoListeners",
+                Modifier.PRIVATE, Modifier.STATIC);
+        navigatorBuilder.addStaticBlock(
+                CodeBlock.of(
+                        "preGoListeners = new $T();\n" +
+                                "$T.setPreGoListeners(preGoListeners);\n", listenerList, ClassName.get("nav.base","BaseIntent")));
+
+        MethodSpec add = MethodSpec.methodBuilder("addPreGoListener").addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                .addParameter(listenerType,"listener")
+                .addCode("if(listener != null){ preGoListeners.add(listener);}\n")
+                .build();
+
+        MethodSpec remove = MethodSpec.methodBuilder("removePreGoListener").addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                .addParameter(listenerType,"listener")
+                .addCode("if(listener != null){ preGoListeners.remove(listener);}\n")
+                .build();
+
+        navigatorBuilder.addMethod(add).addMethod(remove);
 
     }
 

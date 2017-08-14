@@ -4,13 +4,20 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.ParameterizedTypeName;
+import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 
 import javax.annotation.processing.Filer;
 import javax.lang.model.element.Modifier;
+
+import static com.example.nav.processor.NavProcessor.listenerName;
+import static com.example.nav.processor.NavProcessor.navigatorClassName;
+import static com.example.nav.processor.NavProcessor.navigatorPackageName;
 
 /**
  * Created by zhangzhenwei on 2017/8/10.
@@ -37,10 +44,11 @@ public class BaseIntentGenerator {
     ClassName classBundle = ClassName.get("android.os", "Bundle");
     ClassName classToast = ClassName.get("android.widget", "Toast");
 
+    TypeName listenerList = ParameterizedTypeName.get(ClassName.get(ArrayList.class), ClassName.get(navigatorPackageName, navigatorClassName, listenerName));
+
     //ClassName classField = ClassName.get("java.lang.reflect", "Field");
 
     ClassName classActivity = ClassName.get("android.app", "Activity");
-    //ClassName classAppCompatActivity = ClassName.get("android.support.v7.app", "AppCompatActivity");
 
     public void generateBaseIntent(Filer filer) {
 
@@ -57,20 +65,27 @@ public class BaseIntentGenerator {
                 .addParameter(classContext, "context")
                 .addParameter(String.class, "component")
                 .addCode(CodeBlock.of(
-                        " this.fromContext = context;\n" +
+                                " this.fromContext = context;\n" +
                                 " this.component = component;\n" +
                                 " params = new $T();\n",
-                        classBundle))
+                         classBundle))
                 .build();
         builder.addMethod(constructor);
 
         MethodSpec go = MethodSpec.methodBuilder("go").addModifiers(Modifier.PUBLIC)
                 .addCode(CodeBlock.of(
                         "$T intent = intent();\n" +
+                                "if(preGoListeners != null){\n" +
+                                "   for($T listener: preGoListeners){\n" +
+                                "       if(listener.onPreGo(fromContext, intent)){\n" +
+                                "           return;\n" +
+                                "        }\n" +
+                                "   }\n" +
+                                "}\n" +
                                 "if (intentOpenable(intent)){\n" +
                                 "    fromContext.startActivity(intent);\n" +
                                 "}\n",
-                        classIntent))
+                        classIntent, ClassName.get(navigatorPackageName, navigatorClassName, listenerName)))
                 .build();
         builder.addMethod(go);
 
@@ -146,6 +161,15 @@ public class BaseIntentGenerator {
                 .build();
 
         builder.addMethod(getStaticFieldValue);
+
+        builder.addField(
+                listenerList,
+                "preGoListeners",
+                Modifier.PRIVATE, Modifier.STATIC);
+        builder.addMethod(MethodSpec.methodBuilder("setPreGoListeners")
+                .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                .addParameter(listenerList,"listeners")
+                .addCode("preGoListeners = listeners;\n", "").build());
 
         try {
             JavaFile.builder(baseIntentClass.packageName(), builder.build()).build().writeTo(filer);
