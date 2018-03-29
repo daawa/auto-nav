@@ -1,5 +1,10 @@
 apply plugin: 'com.android.library'
 
+
+repositories {
+    maven { url "https://jitpack.io" }
+}
+
 android {
     compileSdkVersion 26
 
@@ -29,7 +34,7 @@ dependencies {
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
     implementation 'com.android.support:design:26.+'
 
-    implementation project(':nav-annotation')
+    implementation 'com.github.daawa.auto-nav:nav-annotation:1.0.1'
 
     implementation project(":generated_nav_library")
 

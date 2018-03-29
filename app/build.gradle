@@ -63,7 +63,7 @@ dependencies {
 //    implementation project(':nav-annotation')
 //    annotationProcessor project(':nav-processor')
 
-    compile 'com.github.daawa.auto-nav:nav-annotation:1.0.1'
+    implementation 'com.github.daawa.auto-nav:nav-annotation:1.0.1'
     annotationProcessor 'com.github.daawa.auto-nav:nav-processor:2.0.0'
 
     implementation 'com.android.support:appcompat-v7:26.+'
