@@ -34,7 +34,7 @@ dependencies {
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
     implementation 'com.android.support:design:26.+'
 
-    implementation 'com.github.daawa.auto-nav:nav-annotation:1.0.1'
+    implementation 'com.github.daawa.auto-nav:nav-annotation:1.1.0'
 
     implementation project(":generated_nav_library")
 
