@@ -6,7 +6,6 @@ repositories {
 
 android {
     compileSdkVersion 26
-    buildToolsVersion "26.0.0"
     defaultConfig {
         applicationId "test.test.navprocessor"
         minSdkVersion 19
@@ -61,11 +60,11 @@ dependencies {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
     implementation project(':generated_nav_library')
-    implementation project(':nav-annotation')
-    annotationProcessor project(':nav-processor')
+//    implementation project(':nav-annotation')
+//    annotationProcessor project(':nav-processor')
 
-    //compile 'com.github.daawa.auto-nav:nav-annotation:1.0.1'
-    //annotationProcessor 'com.github.daawa.auto-nav:nav-processor:1.0.0'
+    compile 'com.github.daawa.auto-nav:nav-annotation:1.0.1'
+    annotationProcessor 'com.github.daawa.auto-nav:nav-processor:2.0.0'
 
     implementation 'com.android.support:appcompat-v7:26.+'
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
