@@ -9,14 +9,14 @@ import android.widget.Toast;
 import com.example.annotation.AutoWireNav;
 import com.example.annotation.IntentParam;
 
-import nav.base.one.Navigator;
+import test.nav.NativeNav;
 
 
 @AutoWireNav
 public class BaseActivity extends AppCompatActivity {
 
     static {
-        Navigator.addPreGoListener(new Navigator.PreGoListener() {
+        NativeNav.addPreGoListener(new NativeNav.PreGoListener() {
             @Override
             public boolean onPreGo(Context fromContext, Intent intent) {
                 if(intent.getExtras()!= null){

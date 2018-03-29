@@ -1,19 +1,17 @@
 package test.test.navprocessor;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.TextView;
 
 import com.example.annotation.AutoWireNav;
 import com.example.annotation.IntentParam;
 
-import nav.base.one.Navigator;
+import test.nav.NativeNav;
 
-@AutoWireNav
+@AutoWireNav(name="Main")
 public class MainActivity extends BaseActivity {
 
     @IntentParam(name = "mainKey1", type = "string")
@@ -38,7 +36,7 @@ public class MainActivity extends BaseActivity {
         tv.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Navigator.toSecondActivity(MainActivity.this)
+                NativeNav.toSecond(MainActivity.this)
                         .param_(new TestParcel())
                         .param2_("ttt")
                         .baseParamA_("aaaa")

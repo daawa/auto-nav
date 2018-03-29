@@ -1,1 +1,1 @@
-include ':app', ':nav-annotation', ':nav-processor', ':nav-baseintent'
+include ':app', ':nav-annotation', ':nav-processor', ':generated_nav_library', ':submodule1'

@@ -3,6 +3,7 @@ package com.github.daawa.nav.processor;
 import com.github.daawa.nav.ActivityIntentModel;
 import com.example.annotation.AutoWireNav;
 import com.example.annotation.IntentParam;
+import com.github.daawa.nav.Util;
 import com.google.auto.service.AutoService;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
@@ -14,9 +15,11 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -43,15 +46,16 @@ import javax.tools.Diagnostic;
 @AutoService(Processor.class)
 public class NavProcessor extends AbstractProcessor {
 
-    public static final String navigatorPackageName = "nav.base.one";
-    public static final String navigatorClassName = "Navigator";
+    public static String navigatorPackageName = "nav.base.one";
+    public static String navigatorClassName = "Navigator";
     public static final String listenerName = "PreGoListener";
 
     private static final String METHOD_PREFIX = "to";
     private static final ClassName classIntent = ClassName.get("android.content", "Intent");
     private static final ClassName classContext = ClassName.get("android.content", "Context");
 
-    private Filer filer;
+    //private Filer filer;
+    private File filer;
     private Messager messager;
     private Elements elementsUtil;
     private Types typesUtil;
@@ -63,28 +67,36 @@ public class NavProcessor extends AbstractProcessor {
     public synchronized void init(ProcessingEnvironment processingEnvironment) {
         super.init(processingEnvironment);
 
-        filer = processingEnvironment.getFiler();
         messager = processingEnvironment.getMessager();
         elementsUtil = processingEnvironment.getElementUtils();
         typesUtil = processingEnvironment.getTypeUtils();
         activityModels = new HashSet<>();
+
+        //filer = processingEnvironment.getFiler();
+        String outPath = processingEnvironment.getOptions().get("out_path");
+        //outPath = "/Users/daawa/Repos/auto-nav/generated_nav_library/src/main/java";
+        messager.printMessage(Diagnostic.Kind.NOTE, "auto-nav output dir:" + outPath);
+        filer = new File(outPath);
+        //Util.deleteDirectory(filer);
+
+        String packageName = processingEnvironment.getOptions().get("package_name");
+        navigatorPackageName = Strings.isNullOrEmpty(packageName)? navigatorPackageName : packageName;
+
+        String className = processingEnvironment.getOptions().get("navigator_name");
+        navigatorClassName = Strings.isNullOrEmpty(className)? navigatorClassName : className;
+
     }
 
 
-    /**
-     * @param set              the annotations we could deal with,
-     *                         same as what {@link #getSupportedAnnotationTypes} returns.
-     * @param roundEnvironment
-     * @return
-     */
     @Override
     public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment) {
-        messager.printMessage(Diagnostic.Kind.NOTE, "\nbegin process annotation");
+        //messager.printMessage(Diagnostic.Kind.NOTE, "\nbegin processing annotation");
         if (set != null && !set.isEmpty()) {
-            for (TypeElement e : set) {
-                messager.printMessage(Diagnostic.Kind.NOTE, "\nAccepted annotation set:" + e.getSimpleName());
-            }
+            //for (TypeElement e : set) {
+            //    messager.printMessage(Diagnostic.Kind.NOTE, "\nAccepted annotation set:" + e.getSimpleName());
+            //}
         } else {
+            //messager.printMessage(Diagnostic.Kind.NOTE, "\nend processing annotation");
             // when set is null or empty, it is a round having nothing to do with this processor.
             return false;
         }
@@ -93,7 +105,7 @@ public class NavProcessor extends AbstractProcessor {
 
         for (Element element : roundEnvironment.getElementsAnnotatedWith(AutoWireNav.class)) {
             if (element.getKind() != ElementKind.CLASS) {
-                messager.printMessage(Diagnostic.Kind.ERROR, "\nAutoWireNav can only be applied to class");
+                messager.printMessage(Diagnostic.Kind.ERROR, "\nAutoWireNav can only be applied to class, skip " + element.getSimpleName());
                 return true;
             }
 
@@ -103,13 +115,19 @@ public class NavProcessor extends AbstractProcessor {
         }
 
         createNavigator(activityModels);
+        //messager.printMessage(Diagnostic.Kind.NOTE, "\nend processing annotation");
         return true;
     }
 
 
     @Override
     public Set<String> getSupportedOptions() {
-        return super.getSupportedOptions();
+        Set<String> set = new HashSet<>(3);
+        set.add("out_path");
+        set.add("package_name");
+        set.add("navigator_name");
+
+        return set;
     }
 
     @Override
@@ -129,18 +147,21 @@ public class NavProcessor extends AbstractProcessor {
     }
 
     private ActivityIntentModel getActivityModel(TypeElement typeElement) {
+        AutoWireNav annotation = typeElement.getAnnotation(AutoWireNav.class);
+        String name = annotation.name();
         ActivityIntentModel activityModel = new ActivityIntentModel(
                 elementsUtil.getPackageOf(typeElement).getQualifiedName().toString(),
-                typeElement.getSimpleName().toString());
+                typeElement.getSimpleName().toString(),
+                name);
 
-        messager.printMessage(Diagnostic.Kind.NOTE, "\ntype:" + typeElement.getQualifiedName());
+        //messager.printMessage(Diagnostic.Kind.NOTE, "\ntype:" + typeElement.getQualifiedName());
 
         activityModel.addParamModels(getParamModels(typeElement));
 
         TypeMirror superType = typeElement.getSuperclass();
 
         while (superType != null && !Object.class.getName().equals(superType.toString())) {
-            messager.printMessage(Diagnostic.Kind.NOTE, "\n   superType:" + superType.toString());
+            //messager.printMessage(Diagnostic.Kind.NOTE, "\n   superType:" + superType.toString());
             Element element = typesUtil.asElement(superType);
             if (element != null && element instanceof TypeElement) {
                 TypeElement superE = (TypeElement) element;
@@ -166,10 +187,10 @@ public class NavProcessor extends AbstractProcessor {
             IntentParam intentParam = paramElement.getAnnotation(IntentParam.class); //AnnotationMirror mirror = e.getAnnotationMirrors().get(0);
             if (intentParam != null) {
                 if (paramElement.getKind() != ElementKind.FIELD || paramElement.getModifiers() == null || !paramElement.getModifiers().contains(Modifier.STATIC)) {
-                    messager.printMessage(Diagnostic.Kind.ERROR, "IntentParam can only be applied to STATIC FIELD");
+                    messager.printMessage(Diagnostic.Kind.ERROR, "IntentParam can only be applied to STATIC FIELD, skip " + paramElement.getSimpleName());
                     continue;
                 }
-                messager.printMessage(Diagnostic.Kind.NOTE, "   IntentParam annotated element:" + paramElement.getSimpleName());
+                //messager.printMessage(Diagnostic.Kind.NOTE, "   IntentParam annotated element:" + paramElement.getSimpleName());
 
                 ActivityIntentModel.ParamModel paramModel = new ActivityIntentModel.ParamModel();
                 paramModel.fieldName = paramElement.getSimpleName().toString();
@@ -204,7 +225,7 @@ public class NavProcessor extends AbstractProcessor {
 
             ClassName returnType = ClassName.get(model.getPackageName(), model.getIntentClzName());
             MethodSpec.Builder methodSpecBuilder = MethodSpec
-                    .methodBuilder(METHOD_PREFIX + model.getClzName());
+                    .methodBuilder(METHOD_PREFIX + model.getAlias());
             methodSpecBuilder.addModifiers(Modifier.PUBLIC, Modifier.STATIC)
                     .addParameter(classContext, "context")
                     .returns(ClassName.get(model.getPackageName(), model.getIntentClzName()))
@@ -248,7 +269,7 @@ public class NavProcessor extends AbstractProcessor {
         navigatorBuilder.addStaticBlock(
                 CodeBlock.of(
                         "preGoListeners = new $T();\n" +
-                                "$T.setPreGoListeners(preGoListeners);\n", listenerList, ClassName.get("nav.base","BaseIntent")));
+                                "$T.setPreGoListeners(preGoListeners);\n", listenerList, ClassName.get(navigatorPackageName,"BaseIntent")));
 
         MethodSpec add = MethodSpec.methodBuilder("addPreGoListener").addModifiers(Modifier.PUBLIC, Modifier.STATIC)
                 .addParameter(listenerType,"listener")
@@ -266,7 +287,7 @@ public class NavProcessor extends AbstractProcessor {
 
 
     private void createActivityIntent(ActivityIntentModel model) {
-        ClassName baseIntent = ClassName.get("nav.base", "BaseIntent");
+        ClassName baseIntent = ClassName.get(navigatorPackageName, "BaseIntent");
         ClassName activityIntent = ClassName.get(model.getPackageName(), model.getIntentClzName());
         TypeSpec.Builder activityIntentBuilder = TypeSpec.classBuilder(activityIntent).addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                 .superclass(baseIntent);

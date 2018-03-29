@@ -8,6 +8,7 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -50,9 +51,9 @@ public class BaseIntentGenerator {
 
     ClassName classActivity = ClassName.get("android.app", "Activity");
 
-    public void generateBaseIntent(Filer filer) {
+    public void generateBaseIntent(File filer) {
 
-        ClassName baseIntentClass = ClassName.get("nav.base", "BaseIntent");
+        ClassName baseIntentClass = ClassName.get(NavProcessor.navigatorPackageName, "BaseIntent");
 
         TypeSpec.Builder builder = TypeSpec.classBuilder(baseIntentClass).addModifiers(Modifier.PUBLIC);
         builder.addField(classContext, "fromContext", Modifier.PRIVATE)

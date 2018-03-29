@@ -1,19 +1,17 @@
 package test.test.navprocessor;
 
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.TextView;
 
 import com.example.annotation.AutoWireNav;
 import com.example.annotation.IntentParam;
 
-import nav.base.one.Navigator;
+import test.nav.NativeNav;
 
 
-@AutoWireNav
+@AutoWireNav(name = "Second")
 public class SecondActivity extends BaseActivity {
-
 
     @IntentParam(name="param",type = "parcelable")
     private static final String test = "key1";
@@ -27,7 +25,7 @@ public class SecondActivity extends BaseActivity {
         findViewById(R.id.text).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Navigator.toMainActivity(SecondActivity.this)
+                NativeNav.toMain(SecondActivity.this)
                         .main_key2_(243.0f)
                         .mainKey1_("skfjdklfs")
                         .go();
@@ -35,7 +33,9 @@ public class SecondActivity extends BaseActivity {
         });
 
 
-        ((TextView)findViewById(R.id.param1)).setText(test + ":" + ((MainActivity.TestParcel)getIntent().getExtras().getParcelable(test)).b);
+        MainActivity.TestParcel testp = ((MainActivity.TestParcel)getIntent().getExtras().getParcelable(test));
+
+        ((TextView)findViewById(R.id.param1)).setText(test + ":" + (testp == null? "": testp.b));
         ((TextView)findViewById(R.id.param2)).setText(ttt + ":" + getIntent().getExtras().getString(ttt));
     }
 }

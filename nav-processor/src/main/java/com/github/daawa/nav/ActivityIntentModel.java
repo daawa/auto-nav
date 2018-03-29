@@ -1,5 +1,7 @@
 package com.github.daawa.nav;
 
+import com.google.common.base.Strings;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,6 +10,7 @@ import java.util.List;
  */
 
 public class ActivityIntentModel {
+    private String alias;
     private String packageName;
     private String clzName;
     private String classIntentName;
@@ -16,7 +19,8 @@ public class ActivityIntentModel {
 
     private List<ParamModel> paramModelList;
 
-    public ActivityIntentModel(String packageName, String clzName) {
+    public ActivityIntentModel(String packageName, String clzName, String name) {
+        this.alias = name;
         this.packageName = packageName;
         this.clzName = clzName ;
         this.qualifiedName = packageName + "." + clzName;
@@ -46,6 +50,10 @@ public class ActivityIntentModel {
         }
 
         return super.equals(o);
+    }
+
+    public String getAlias(){
+        return Strings.isNullOrEmpty(alias)? getClzName() : alias;
     }
 
     public List<ParamModel> getParamModelList(){
